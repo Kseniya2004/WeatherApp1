@@ -28,7 +28,7 @@ public partial class MainPage : ContentPage
 			data = JsonConvert.DeserializeObject<List<City>>(json);
 			foreach (var track in data)
 			{
-				languagePicker.Items.Add(track.Title);
+				languagePicker.Items.Add(track.Name);
 			}				
 		}           
     }
@@ -38,14 +38,14 @@ public partial class MainPage : ContentPage
 		string name = languagePicker.SelectedItem.ToString();
 		foreach (var track in data)
 		{
-			if (name == track.Title)
+			if (name == track.Name)
 			{
-				DisplayAlert("Уведомление", track.Title + " lat:" +track.Latitude.ToString()
+				DisplayAlert("Уведомление", track.Name + " lat:" +track.Latitude.ToString()
 				+ " lon:" + track.Longitude.ToString(), "ОК");
 				// установка контекста данных
 				this.BindingContext = new CityViewModel
 				{
-					Title = track.Title,
+					Name = track.Name,
 					Latitude = track.Latitude,
 					Longitude = track.Longitude,
 					Time = "",

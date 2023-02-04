@@ -5,8 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+//using Java.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+//using static Java.Util.Jar.Attributes;
 
 namespace WeatherApp1
 {
@@ -14,20 +16,25 @@ namespace WeatherApp1
     {
         public event PropertyChangedEventHandler PropertyChanged;
         public City city;
+
+        public List<City> data;
         public ICommand LoadDataCommand { protected set; get; }
+        public ICommand LoadNewCityCommand { protected set; get; }
+        public ICommand EntryCityCommand { protected set; get; }
         public CityViewModel()
         {
             city = new City();
             this.LoadDataCommand = new Command(LoadData);
+            this.LoadNewCityCommand = new Command(LoadNewCity);
         }
 
-        public string Title
+        public string Name
         {
-            get { return city.Title; }
+            get { return city.Name; }
             set
             {
-                city.Title = value;
-                OnPropertyChanged("Title");
+                city.Name = value;
+                OnPropertyChanged("Name");
             }
         }
 
@@ -107,13 +114,57 @@ namespace WeatherApp1
             catch (Exception ex)
             { }
         }
-
-        public void OnPropertyChanged(string prop = "")
+        
+    public async void LoadNewCity()
+    {
+        string name = this.Name;
+        if (!string.IsNullOrEmpty(name))
         {
-            if (PropertyChanged != null)
-            {
-                PropertyChanged(this, new PropertyChangedEventArgs(prop));
+            string url = $" https://geocoding-api.open-meteo.com/v1/search?name={name}&language=ru";
+            try
+                {
+                    HttpClient client = new HttpClient();
+                    client.BaseAddress = new Uri(url);
+                    var response = await client.GetAsync(client.BaseAddress);
+                    response.EnsureSuccessStatusCode();// выброc исключения, ecли пpоизошлаошибка
+                                                       // десериализация ответа в формате json
+                    var content = await response.Content.ReadAsStringAsync();
+                    JObject o = JObject.Parse(content);
+                    var str = o.SelectToken(@"$.results[0]");
+                    var current_cityInfo = JsonConvert.DeserializeObject<City>(str.ToString());
+                    // Добавим в хранилище найденый город (низвание, широту, долготу)
+                    List<City> cities;
+                    City city1 = new City();
+                    city1.Name = current_cityInfo.Name;
+                    city1.Latitude = current_cityInfo.Latitude;
+                    city1.Longitude = current_cityInfo.Longitude;
+                    //cities = new List<City> { cityl, city2, city3 };
+                    LoadCities();
+                    data.Add(city1);
+                    string s = JsonConvert.SerializeObject(data);
+                    _ = SecureStorage.SetAsync("City", s); // key: City - под ним храниться список словарей
             }
+            catch (Exception ex)
+            { }
+        }    
+    }
+
+    public async void LoadCities()
+    {
+        // Читаем города из хранилища
+        string json = await SecureStorage.GetAsync("City");
+        if (!string.IsNullOrEmpty(json))
+            data = JsonConvert.DeserializeObject<List<City>>(json);
+    }
+
+
+
+    public void OnPropertyChanged(string prop = "")
+    {
+        if (PropertyChanged != null)
+        {
+            PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
+    }
     }
 }

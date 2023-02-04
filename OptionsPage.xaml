@@ -9,8 +9,8 @@
             Text="Welcome to .NET MAUI!"
             VerticalOptions="Center"
             HorizontalOptions="Center" />
-        <Entry x:Name="EntryCity" Placeholder="Введите название города" />
-        <Button Text="Добавить" Clicked="OnButtonAddClick"/>
+        <Entry x:Name="EntryCity" Placeholder="Введите название города" TextChanged="EntryCityChanged"/>
+        <Button Text="Добавить" Command="{Binding LoadNewCityCommand}"/>
         <Button Text="Очистить список городов" Clicked="OnCuttonClear"/>
     </VerticalStackLayout>
 </ContentPage>
